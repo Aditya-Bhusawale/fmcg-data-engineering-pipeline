@@ -1,4 +1,4 @@
-# FMCG Data Engineering Pipeline with Databricks
+# Databricks PySpark ETL Pipeline
 
 An end-to-end Data Engineering project built using **PySpark**, **Databricks**, **Delta Lake**, and **Amazon S3**. The project implements the **Medallion Architecture (Bronze → Silver → Gold)** to process historical and incremental data for analytics.
 
