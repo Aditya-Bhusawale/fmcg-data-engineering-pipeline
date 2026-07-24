@@ -148,17 +148,19 @@ display(df_silver.limit(5))
 # COMMAND ----------
 
 ### 1: Add division column
+from pyspark.sql.functions import *
+
 df_silver = (
     df_silver
     .withColumn(
         "division",
-        F.when(F.col("category") == "Energy Bars",        "Nutrition Bars")
-         .when(F.col("category") == "Protein Bars",       "Nutrition Bars")
-         .when(F.col("category") == "Granola & Cereals",  "Breakfast Foods")
-         .when(F.col("category") == "Recovery Dairy",     "Dairy & Recovery")
-         .when(F.col("category") == "Healthy Snacks",     "Healthy Snacks")
-         .when(F.col("category") == "Electrolyte Mix",    "Hydration & Electrolytes")
-         .otherwise("Other")
+        when(col("category") == "Energy Bars", "Nutrition Bars")
+        .when(col("category") == "Protein Bars", "Nutrition Bars")
+        .when(col("category") == "Granola & Cereals", "Breakfast Foods")
+        .when(col("category") == "Recovery Dairy", "Dairy & Recovery")
+        .when(col("category") == "Healthy Snacks", "Healthy Snacks")
+        .when(col("category") == "Electrolyte Mix", "Hydration & Electrolytes")
+        .otherwise("Other")
     )
 )
 
