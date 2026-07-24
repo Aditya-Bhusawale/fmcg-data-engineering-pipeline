@@ -4,7 +4,7 @@
 
 # COMMAND ----------
 
-from pyspark.sql import functions as F
+from pyspark.sql.functions import *
 from delta.tables import DeltaTable
 from pyspark.sql.window import Window
 
@@ -97,11 +97,11 @@ date_formats = ["yyyy/MM/dd", "dd/MM/yyyy", "yyyy-MM-dd", "dd-MM-yyyy"]
 
 df_silver = df_bronze.withColumn(
     "month",
-    F.coalesce(
-        F.try_to_date(F.col("month"), "yyyy/MM/dd"),
-        F.try_to_date(F.col("month"), "dd/MM/yyyy"),
-        F.try_to_date(F.col("month"), "yyyy-MM-dd"),
-        F.try_to_date(F.col("month"), "dd-MM-yyyy")
+    coalesce(
+        try_to_date(col("month"), "yyyy/MM/dd"),
+        try_to_date(col("month"), "dd/MM/yyyy"),
+        try_to_date(col("month"), "yyyy-MM-dd"),
+        try_to_date(col("month"), "dd-MM-yyyy")
     )
 )
 
