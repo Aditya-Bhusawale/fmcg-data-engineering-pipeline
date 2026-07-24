@@ -1,5 +1,5 @@
 # Databricks notebook source
-from pyspark.sql import functions as F
+from pyspark.sql.functions import *
 from delta.tables import DeltaTable
 
 # COMMAND ----------
@@ -69,13 +69,13 @@ df_orders.show(2)
 # COMMAND ----------
 
 # 1. Keep only rows where order_qty is present
-df_orders = df_orders.filter(F.col("order_qty").isNotNull())
+df_orders = df_orders.filter(col("order_qty").isNotNull())
 
 
 # 2. Clean customer_id → keep numeric, else set to 999999
 df_orders = df_orders.withColumn(
     "customer_id",
-    F.when(F.col("customer_id").rlike("^[0-9]+$"), F.col("customer_id"))
+    when(col("customer_id").rlike("^[0-9]+$"), col("customer_id"))
      .otherwise("999999")
      .cast("string")
 )
@@ -84,17 +84,17 @@ df_orders = df_orders.withColumn(
 #    "Tuesday, July 01, 2025" → "July 01, 2025"
 df_orders = df_orders.withColumn(
     "order_placement_date",
-    F.regexp_replace(F.col("order_placement_date"), r"^[A-Za-z]+,\s*", "")
+    regexp_replace(col("order_placement_date"), r"^[A-Za-z]+,\s*", "")
 )
 
 # 4. Parse order_placement_date using multiple possible formats
 df_orders = df_orders.withColumn(
     "order_placement_date",
-    F.coalesce(
-        F.try_to_date("order_placement_date", "yyyy/MM/dd"),
-        F.try_to_date("order_placement_date", "dd-MM-yyyy"),
-        F.try_to_date("order_placement_date", "dd/MM/yyyy"),
-        F.try_to_date("order_placement_date", "MMMM dd, yyyy"),
+    coalesce(
+        try_to_date("order_placement_date", "yyyy/MM/dd"),
+        try_to_date("order_placement_date", "dd-MM-yyyy"),
+        try_to_date("order_placement_date", "dd/MM/yyyy"),
+        try_to_date("order_placement_date", "MMMM dd, yyyy"),
     )
 )
 
@@ -102,14 +102,14 @@ df_orders = df_orders.withColumn(
 df_orders = df_orders.dropDuplicates(["order_id", "order_placement_date", "customer_id", "product_id", "order_qty"])
 
 # 5. convert product id to string
-df_orders = df_orders.withColumn('product_id', F.col('product_id').cast('string'))
+df_orders = df_orders.withColumn('product_id', col('product_id').cast('string'))
 
 # COMMAND ----------
 
 # check what's the maximum and minimum date
 df_orders.agg(
-    F.min("order_placement_date").alias("min_date"),
-    F.max("order_placement_date").alias("max_date")
+    min("order_placement_date").alias("min_date"),
+    max("order_placement_date").alias("max_date")
 ).show()
 
 # COMMAND ----------
@@ -121,13 +121,12 @@ df_joined.show(5)
 
 # COMMAND ----------
 
-if not (spark.catalog.tableExists(silver_table)):
-    df_joined.write.format("delta").option(
-        "delta.enableChangeDataFeed", "true"
-    ).option("mergeSchema", "true").mode("overwrite").saveAsTable(silver_table)
-else:
-    silver_delta = DeltaTable.forName(spark, silver_table)
-    silver_delta.alias("silver").merge(df_joined.alias("bronze"), "silver.order_placement_date = bronze.order_placement_date AND silver.order_id = bronze.order_id AND silver.product_code = bronze.product_code AND silver.customer_id = bronze.customer_id").whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()
+df_joined.write \
+    .format("delta") \
+    .option("delta.enableChangeDataFeed", "true") \
+    .option("mergeSchema", "true") \
+    .mode("overwrite") \
+    .saveAsTable(silver_table)
 
 # COMMAND ----------
 
@@ -142,14 +141,12 @@ df_gold.show(2)
 
 # COMMAND ----------
 
-if not (spark.catalog.tableExists(gold_table)):
-    print("creating New Table")
-    df_gold.write.format("delta").option(
-        "delta.enableChangeDataFeed", "true"
-    ).option("mergeSchema", "true").mode("overwrite").saveAsTable(gold_table)
-else:
-    gold_delta = DeltaTable.forName(spark, gold_table)
-    gold_delta.alias("source").merge(df_gold.alias("gold"), "source.date = gold.date AND source.order_id = gold.order_id AND source.product_code = gold.product_code AND source.customer_code = gold.customer_code").whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()
+df_gold.write \
+    .format("delta") \
+    .option("delta.enableChangeDataFeed", "true") \
+    .option("mergeSchema", "true") \
+    .mode("overwrite") \
+    .saveAsTable(gold_table)
 
 # COMMAND ----------
 
@@ -186,4 +183,4 @@ df_monthly.count()
 # COMMAND ----------
 
 gold_parent_delta = DeltaTable.forName(spark, f"{catalog}.{gold_schema}.fact_orders")
-gold_parent_delta.alias("parent_gold").merge(df_monthly.alias("child_gold"), "parent_gold.date = child_gold.date AND parent_gold.product_code = child_gold.product_code AND parent_gold.customer_code = child_gold.customer_code").whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()
+gold_parent_delta.alias("parent_gold").merge(df_monthly.alias("child_gold"), " parent_gold.product_code = child_gold.product_code ").whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()
