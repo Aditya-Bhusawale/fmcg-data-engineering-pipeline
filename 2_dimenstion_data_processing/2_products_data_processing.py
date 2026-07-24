@@ -107,8 +107,8 @@ df_silver.select('category').distinct().show()
 # Title case fix
 df_silver = df_silver.withColumn(
     "category",
-    F.when(F.col("category").isNull(), None)
-     .otherwise(F.initcap("category"))
+    when(col("category").isNull(), None)
+     .otherwise(initcap("category"))
 )
 
 # COMMAND ----------
