@@ -127,11 +127,11 @@ df_silver = (
     df_silver
     .withColumn(
         "product_name",
-        F.regexp_replace(F.col("product_name"), "(?i)Protien", "Protein")
+        regexp_replace(col("product_name"), "(?i)Protien", "Protein")
     )
     .withColumn(
         "category",
-        F.regexp_replace(F.col("category"), "(?i)Protien", "Protein")
+        regexp_replace(col("category"), "(?i)Protien", "Protein")
     )
 )
 
@@ -168,7 +168,7 @@ df_silver = (
 ### 2: Variant column
 df_silver = df_silver.withColumn(
     "variant",
-    F.regexp_extract(F.col("product_name"), r"\((.*?)\)", 1)
+    regexp_extract(col("product_name"), r"\((.*?)\)", 1)
 )
 
 
