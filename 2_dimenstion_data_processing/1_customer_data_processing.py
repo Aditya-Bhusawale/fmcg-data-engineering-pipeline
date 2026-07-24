@@ -180,7 +180,6 @@ display(df_silver)
 df_silver.write \
     .format("delta") \
     .option("delta.enableChangeDataFeed", "true") \
-    .option("mergeSchema", "true") \
     .mode("overwrite") \
     .saveAsTable(f"{catalog}.{silver_schema}.{data_source}")
 
