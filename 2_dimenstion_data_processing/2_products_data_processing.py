@@ -176,21 +176,26 @@ df_silver = df_silver.withColumn(
 
 # Invalid product_ids are replaced with a fallback value to avoid losing fact records and ensure downstream joins remain consistent
 
+
 df_silver = (
     df_silver
     # 1. Generate deterministic product_code from product_name
     .withColumn(
         "product_code",
-        F.sha2(F.col("product_name").cast("string"), 256)
+        sha2(col("product_name").cast("string"), 256)
     )
+
     # 2. Clean product_id: keep only numeric IDs, else set to 999999
     .withColumn(
         "product_id",
-        F.when(
-            F.col("product_id").cast("string").rlike("^[0-9]+$"),
-            F.col("product_id").cast("string")
-        ).otherwise(F.lit(999999).cast("string"))
+        when(
+            col("product_id").cast("string").rlike("^[0-9]+$"),
+            col("product_id").cast("string")
+        ).otherwise(
+            lit(999999).cast("string")
+        )
     )
+
     # 3. Rename product_name → product
     .withColumnRenamed("product_name", "product")
 )
